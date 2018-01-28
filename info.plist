@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.thefella.alfredapp.tedtalks</string>
+	<key>category</key>
+	<string>Internet</string>
+	<key>connections</key>
+	<dict>
+		<key>CCE90483-469C-4BFE-8DAD-0215546E58B4</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>B4EA33F1-85E5-4337-8A9C-E6ECC0EB9F51</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Conor MacNeill</string>
+	<key>description</key>
+	<string>Search TED Talks</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>TED Talks</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>browser</key>
+				<string></string>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>B4EA33F1-85E5-4337-8A9C-E6ECC0EB9F51</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<false/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>100</integer>
+				<key>keyword</key>
+				<string>ted</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<false/>
+				<key>queuedelaymode</key>
+				<integer>1</integer>
+				<key>queuemode</key>
+				<integer>2</integer>
+				<key>runningsubtext</key>
+				<string>Returning TED Talks in a few seconds...</string>
+				<key>script</key>
+				<string>&lt;?php
+
+//! Cache
+$cache = getenv('alfred_workflow_cache');
+if (!is_dir($cache)) {
+    mkdir($cache);
+}
+
+
+//! User query 
+$query = trim($argv[1]);
+
+
+//! See if a category is used
+$possible_cat = strtok($query, " ");
+switch ($possible_cat) 
+{
+    case 'talks':
+        $cat = 'talks';
+        break;
+    case 'people':
+        $cat = 'people';
+        break;
+    case 'playlists':
+        $cat = 'playlists';
+        break;
+    default:
+       $cat = 'talks';
+}
+
+
+//! Results Variables
+$domain = "https://www.ted.com";
+$search_term = urlencode(str_replace($cat, '', $query)); //! If typing a category, remove category from actual search term
+$number_of_results = 9;
+$classname = 'search__result';
+$list = array();
+
+
+//! Get DOM from built search query
+$html = file_get_contents('https://www.ted.com/search?cat='.$cat.'&amp;per_page='.$number_of_results.'&amp;q='.$search_term);
+$dom = new DOMDocument();
+@$dom-&gt;loadHTML($html); //! Hide errors from malformed HTML
+
+
+//! Use xpath to traverse DOM
+$xpath = new DOMXPath($dom);
+$results = $xpath-&gt;query("//article[contains(@class, 'result')]");
+
+
+//! If results, loop through them
+if ($results-&gt;length &gt; 0) 
+{
+    $i = 0;
+    foreach ($results as $result) 
+    {
+
+	    //! Get title
+	    $title = $xpath-&gt;query(".//h3[1]", $result)-&gt;item(0)-&gt;nodeValue;
+
+	    //! Get link to page
+	    $url = $xpath-&gt;query(".//a[1]/@href", $result)-&gt;item(0)-&gt;nodeValue;
+
+	    //! Get thumbnail
+	    $img = $xpath-&gt;query(".//img[1]/@src", $result)-&gt;item(0)-&gt;nodeValue;  
+	    
+	    //! Get description
+	    $desc = $xpath-&gt;query(".//div[contains(@class, 'search__result__description')]", $result)-&gt;item(0)-&gt;nodeValue;
+	    
+	    
+	    //! Image file caching
+	    $cached_file = $cache.'/'.crc32($url).'.jpg';
+	    if (!file_exists($cached_file)) 
+	    {
+			$cache_img = file_get_contents($img.'?quality=41&amp;w=60&amp;h=60');
+			file_put_contents($cached_file, $cache_img);
+		}
+	    
+	    
+	    //! Build results for JSON
+	    $list[$i]['uid'] = base64_encode($url);
+	    $list[$i]['type'] = 'default';
+	    $list[$i]['title'] = trim($title);
+	    $list[$i]['subtitle'] = trim($desc);
+	    $list[$i]['arg'] = $domain.$url;
+	    $list[$i]['icon']['path'] = $cached_file;
+	    $list[$i]['quicklookurl'] = $domain.$url;
+
+		//! Iterate
+		$i++;
+    }
+}
+
+
+//! Build  JSON for display
+$data = array(
+	'items' =&gt; $list
+);
+
+
+//! Display JSON results
+echo json_encode($data);
+?&gt;</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string>Search for TED Talks</string>
+				<key>title</key>
+				<string>Search TED Talks</string>
+				<key>type</key>
+				<integer>1</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>CCE90483-469C-4BFE-8DAD-0215546E58B4</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Type "ted" followed by your search term to bring up TED Talks from their site. 
+
+The first time you search for something, it may take a second to cache the images, as Alfred doesn't allow remote images.
+
+You can also type a category, followed by a search, e.g. "ted people casey" to find people called Casey, or "ted playlist numbers" to find playlists about numbers.
+
+The categories incuded are talks, people, and playlists. The default search is for talks.</string>
+	<key>uidata</key>
+	<dict>
+		<key>B4EA33F1-85E5-4337-8A9C-E6ECC0EB9F51</key>
+		<dict>
+			<key>note</key>
+			<string>Opens TED Talk URL in your default browser.</string>
+			<key>xpos</key>
+			<integer>590</integer>
+			<key>ypos</key>
+			<integer>230</integer>
+		</dict>
+		<key>CCE90483-469C-4BFE-8DAD-0215546E58B4</key>
+		<dict>
+			<key>note</key>
+			<string>Type 'ted' followed by your search.</string>
+			<key>xpos</key>
+			<integer>250</integer>
+			<key>ypos</key>
+			<integer>230</integer>
+		</dict>
+	</dict>
+	<key>version</key>
+	<string>v1.0</string>
+	<key>webaddress</key>
+	<string>https://thefella.com</string>
+</dict>
+</plist>
