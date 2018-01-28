@@ -36,4 +36,4 @@ ted events full spectrum
 The categories you can search on are: *talks*, *people*, *playlists*, *blogs*, *pages*, and *events*. The default search category is *talks*.
 
 ### Note
-The first time you do a search, it may take a few seconds for Alfred to download and cache the images.
+The first time you do a search, it may take a few seconds for Alfred to download and cache the images. If you do a lot of different searches, you may want to clear our your cache after a while.
