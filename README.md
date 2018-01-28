@@ -8,7 +8,7 @@ To search TED for talks about numbers:
 ```
 ted numbers
 ```
-<img src="https://raw.githubusercontent.com/thefella/alfred-tedtalks/master/Screenshots/default.jpg" width="200">
+<img src="https://raw.githubusercontent.com/thefella/alfred-tedtalks/master/Screenshots/default.jpg" width="400">
 
 To search TED for people called John: 
 ```
