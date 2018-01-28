@@ -35,25 +35,6 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>browser</key>
-				<string></string>
-				<key>spaces</key>
-				<string></string>
-				<key>url</key>
-				<string>{query}</string>
-				<key>utf8</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.openurl</string>
-			<key>uid</key>
-			<string>B4EA33F1-85E5-4337-8A9C-E6ECC0EB9F51</string>
-			<key>version</key>
-			<integer>1</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
 				<key>alfredfiltersresultsmatchmode</key>
@@ -94,7 +75,13 @@ $query = trim($argv[1]);
 $possible_cat = strtok($query, " ");
 switch ($possible_cat) 
 {
+	case 'all':
+        $cat = 'all';
+        break;
     case 'talks':
+        $cat = 'talks';
+        break;
+    case 'talk':
         $cat = 'talks';
         break;
     case 'people':
@@ -103,8 +90,29 @@ switch ($possible_cat)
     case 'playlists':
         $cat = 'playlists';
         break;
+    case 'playlist':
+        $cat = 'playlists';
+        break;
+    case 'blog':
+        $cat = 'blog_posts';
+        break;
+    case 'blogs':
+        $cat = 'blog_posts';
+        break;
+    case 'pages':
+        $cat = 'pages';
+        break;
+    case 'page':
+        $cat = 'pages';
+        break;
+    case 'events':
+        $cat = 'tedx_events';
+        break;
+    case 'event':
+        $cat = 'tedx_events';
+        break;
     default:
-       $cat = 'talks';
+    	$cat = 'talks';
 }
 
 
@@ -146,15 +154,13 @@ if ($results-&gt;length &gt; 0)
 	    //! Get description
 	    $desc = $xpath-&gt;query(".//div[contains(@class, 'search__result__description')]", $result)-&gt;item(0)-&gt;nodeValue;
 	    
-	    
-	    //! Image file caching
-	    $cached_file = $cache.'/'.crc32($url).'.jpg';
-	    if (!file_exists($cached_file)) 
-	    {
-			$cache_img = file_get_contents($img.'?quality=41&amp;w=60&amp;h=60');
-			file_put_contents($cached_file, $cache_img);
-		}
-	    
+	    //! Events
+	    if ($cat == 'tedx_events') {
+	    	$desc = $xpath-&gt;query(".//div[contains(@class, 'search__result__kicker')]", $result)-&gt;item(0)-&gt;nodeValue;
+	    	$desc = str_replace(array("\r", "\n", "Event details:"), '', $desc);
+			$title = substr($title, 0, strpos($title, '-'));
+	    }
+
 	    
 	    //! Build results for JSON
 	    $list[$i]['uid'] = base64_encode($url);
@@ -162,8 +168,22 @@ if ($results-&gt;length &gt; 0)
 	    $list[$i]['title'] = trim($title);
 	    $list[$i]['subtitle'] = trim($desc);
 	    $list[$i]['arg'] = $domain.$url;
-	    $list[$i]['icon']['path'] = $cached_file;
 	    $list[$i]['quicklookurl'] = $domain.$url;
+	    
+	    
+	    //! Get thumbnails if they exist, otherwise get icon from workflow folder
+	    if ($img) 
+	    {
+		    //! Image file caching
+		    $cached_file = $cache.'/'.crc32($url).'.jpg';
+		    if (!file_exists($cached_file)) 
+		    {
+				$cache_img = file_get_contents($img.'?quality=41&amp;w=60&amp;h=60');
+				file_put_contents($cached_file, $cache_img);
+			}
+		    $list[$i]['icon']['path'] = $cached_file;
+	    }
+
 
 		//! Iterate
 		$i++;
@@ -200,6 +220,25 @@ echo json_encode($data);
 			<key>version</key>
 			<integer>2</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>browser</key>
+				<string></string>
+				<key>spaces</key>
+				<string></string>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>B4EA33F1-85E5-4337-8A9C-E6ECC0EB9F51</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string>Type "ted" followed by your search term to bring up TED Talks from their site. 
@@ -225,7 +264,7 @@ The categories incuded are talks, people, and playlists. The default search is f
 			<key>note</key>
 			<string>Type 'ted' followed by your search.</string>
 			<key>xpos</key>
-			<integer>250</integer>
+			<integer>220</integer>
 			<key>ypos</key>
 			<integer>230</integer>
 		</dict>
